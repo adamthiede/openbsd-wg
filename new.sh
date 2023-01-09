@@ -3,32 +3,34 @@
 # put it in the setup.
 wg_if="wg0"
 port="51820"
+iprange="10.0.0"
 pub_ip=$(curl ipconfig.io)
 # to use a dnsname instead of a public IP, run script like so:
 ## dnsname="my.server.com" ./new.sh
-# otherwise clientconf will have server IP.
+# or uncomment/populate the following line.
+# dnsname="my.server.com"
 endpoint="${dnsname:-$pub_ip}"
 short_name=$(hostname -s)
 
-cd /etc/wireguard
+cd /etc/wireguard || exit 1
 newbit=$(( $(cat bit.txt) + 1 ))
 echo $newbit > bit.txt
-echo "enter client name"
+echo "enter client name (no spaces!)"
 read name
-mkdir -p ./${name}
-wg genkey > ./${name}/secret.key
-chmod 600 ./${name}/secret.key
-wg pubkey < ./${name}/secret.key > ./${name}/public.key
-config="# ${name}
+mkdir -p "./$name"
+wg genkey > "./$name/secret.key"
+chmod 600 "./$name/secret.key"
+wg pubkey < "./$name/secret.key" > "./$name/public.key"
+config="# $name
 [Peer]
-PublicKey = $(cat ./${name}/public.key)
-AllowedIPs = 10.0.0.${newbit}/32
+PublicKey = $(cat "./$name/public.key")
+AllowedIPs = ${iprange}.${newbit}/32
 "
 echo "$config" | tee -a $wg_if.conf
 
 clientconf="[Interface]
-PrivateKey = $(cat ./${name}/secret.key)
-Address = 10.0.0.${newbit}
+PrivateKey = $(cat "./$name/secret.key")
+Address = ${iprange}.${newbit}
 
 [Peer]
 PublicKey = $(cat public.key)

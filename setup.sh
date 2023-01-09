@@ -3,14 +3,15 @@
 eth_if="vio0"
 wg_if="wg0"
 port="51820"
+iprange="10.0.0"
 
 # install package
 pkg_add wireguard-tools
 
 # create interface
-echo "inet 10.0.0.1 255.255.255.0 NONE
+echo "inet $iprange.1 255.255.255.0 NONE
 up
-!/usr/local/bin/wg setconf $wg_if /etc/wireguard/$wg_if.conf" | tee /etc/hostname.wg0
+!/usr/local/bin/wg setconf $wg_if /etc/wireguard/$wg_if.conf" | tee /etc/hostname.$wg_if
 
 # add firewall rules
 echo "
@@ -30,7 +31,7 @@ echo "net.inet6.ip6.forwarding=1" >> /etc/sysctl.conf
 mkdir -p /etc/wireguard
 chmod 700 /etc/wireguard
 [ -f new.sh ] && mv new.sh /etc/wireguard/
-cd /etc/wireguard
+cd /etc/wireguard || exit 1
 wg genkey > secret.key
 chmod 600 secret.key
 wg pubkey < secret.key > public.key 
